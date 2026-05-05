@@ -4,7 +4,7 @@ Ferramenta clínica de auxílio à interpretação de hemogasometria venosa e c�
 
 Desenvolvida para uso à beira do paciente, com suporte a dispositivos móveis.
 
-**Acesse:** [wanderson-melo1021.github.io/hemogasometria-vet](https://wanderson-melo1021.github.io/hemogasometria-vet/)
+**Acesse:** [wanderson-melo1021.github.io/hemogaso_vet](https://wanderson-melo1021.github.io/hemogaso_vet/)
 
 ---
 

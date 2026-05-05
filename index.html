@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hemogasometria Venosa Veterinária</title>
+<style>
+:root {
+  --primary: #0369a1;
+  --primary-light: #e0f2fe;
+  --bg: #f0f9ff;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --normal: #16a34a;   --normal-bg: #dcfce7;
+  --leve: #a16207;     --leve-bg: #fef9c3;
+  --moderado: #c2410c; --moderado-bg: #ffedd5;
+  --grave: #dc2626;    --grave-bg: #fee2e2;
+  --critico: #7f1d1d;  --critico-bg: #fecaca;
+  --info: #1d4ed8;     --info-bg: #dbeafe;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+
+header{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;padding:1.25rem 2rem;display:flex;align-items:center;gap:1rem}
+header .icon{font-size:2rem}
+header h1{font-size:1.3rem;font-weight:700}
+header p{font-size:.82rem;opacity:.8}
+
+main{max-width:960px;margin:0 auto;padding:1.5rem 1rem}
+
+.card{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:1.25rem;margin-bottom:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-title{font-size:.8rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid var(--primary-light)}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.75rem}
+.form-group{display:flex;flex-direction:column;gap:.25rem}
+label{font-size:.78rem;font-weight:500;color:var(--muted)}
+label .unit{font-weight:400;color:#94a3b8}
+input[type=number]{padding:.45rem .7rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:#fafafa;width:100%;transition:border-color .15s}
+input:focus{outline:none;border-color:var(--primary);background:#fff}
+input.required{border-left:3px solid var(--primary)}
+
+.species-group{display:flex;gap:.75rem;margin-bottom:1rem}
+.species-btn{flex:1;padding:.7rem;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-size:.95rem;font-weight:500;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.species-btn:hover{border-color:var(--primary)}
+.species-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+
+.btn-primary{display:block;width:100%;padding:.9rem;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(3,105,161,.3)}
+
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.5rem}
+.results-title{font-size:1.2rem;font-weight:700;color:var(--primary)}
+.btn-print{padding:.45rem .9rem;background:#fff;color:var(--primary);border:1.5px solid var(--primary);border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer}
+.btn-print:hover{background:var(--primary-light)}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.finding-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.finding-table tr{border-bottom:1px solid var(--border)}
+.finding-table tr:last-child{border-bottom:none}
+.finding-table td{padding:.55rem .4rem;font-size:.88rem;vertical-align:top;word-break:break-word;overflow-wrap:break-word}
+.finding-table td:first-child{font-weight:500;width:28%;color:#334155}
+.finding-table td:nth-child(2){width:110px}
+
+.badge{display:inline-flex;align-items:center;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.badge-normal  {background:var(--normal-bg);  color:var(--normal)}
+.badge-leve    {background:var(--leve-bg);    color:var(--leve)}
+.badge-moderado{background:var(--moderado-bg);color:var(--moderado)}
+.badge-grave   {background:var(--grave-bg);   color:var(--grave)}
+.badge-critico {background:var(--critico-bg); color:var(--critico);font-weight:800}
+.badge-info    {background:var(--info-bg);    color:var(--info)}
+
+.repo-card{border-left:4px solid #f59e0b;background:#fffbeb;border-radius:0 10px 10px 0;padding:1rem;margin-bottom:1rem}
+.repo-card.critico{border-color:var(--grave);background:#fff5f5}
+.repo-title{font-size:.95rem;font-weight:700;color:#92400e;margin-bottom:.5rem}
+.repo-card.critico .repo-title{color:var(--grave)}
+.repo-section{margin-top:.5rem}
+.repo-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.15rem}
+.repo-value{font-size:.88rem;white-space:pre-wrap;line-height:1.6;word-break:break-word;overflow-wrap:break-word}
+.repo-atencao{margin-top:.5rem;padding:.45rem .7rem;background:rgba(220,38,38,.08);border-radius:6px;font-size:.83rem;color:var(--grave);white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word}
+
+.ref-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.ref-table th{background:var(--primary-light);color:var(--primary);font-weight:600;padding:.45rem .75rem;text-align:left}
+.ref-table td{padding:.38rem .75rem;border-bottom:1px solid var(--border);word-break:break-word}
+.ref-table tr:last-child td{border-bottom:none}
+.ref-table td:nth-child(2),.ref-table td:nth-child(3){text-align:center}
+.ref-hi{font-weight:700;color:var(--primary)}
+
+.no-repos{color:var(--normal);font-weight:500;padding:.5rem 0}
+.disclaimer{text-align:center;color:var(--muted);font-size:.8rem;padding:.75rem}
+
+footer{text-align:center;padding:1.5rem;color:var(--muted);font-size:.78rem;border-top:1px solid var(--border);margin-top:1rem}
+
+#results{display:none}
+
+@media(max-width:600px){
+  header{padding:1rem}
+  header h1{font-size:1.05rem}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .finding-table td{font-size:.78rem;padding:.45rem .3rem}
+  .finding-table td:first-child{width:26%}
+  .finding-table td:nth-child(2){width:82px}
+  .badge{font-size:.65rem;padding:.1rem .35rem}
+  .ref-table{font-size:.76rem}
+  .ref-table th,.ref-table td{padding:.35rem .4rem}
+  .repo-value{font-size:.82rem}
+  .results-title{font-size:1rem}
+}
+
+@media print{
+  body{background:#fff}
+  header{background:#0369a1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .form-section,.btn-print,.btn-primary,.species-btn{display:none!important}
+  #results{display:block!important}
+  .card{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid}
+  .badge,.repo-card,.repo-atencao{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="icon">🩺</div>
+  <div>
+    <h1>Hemogasometria Venosa Veterinária</h1>
+    <p>Interpretação e Reposição para Cães e Gatos — @wanderson_nefrovet</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ── FORMULÁRIO ─────────────────────────────────────────────────────────── -->
+<div class="form-section">
+
+  <div class="card">
+    <div class="card-title">Paciente</div>
+    <div class="species-group">
+      <button class="species-btn active" id="btn-dog" onclick="selectSpecies('dog')">🐕 Cão</button>
+      <button class="species-btn"        id="btn-cat" onclick="selectSpecies('cat')">🐈 Gato</button>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="form-group">
+        <label>Peso <span class="unit">(kg) *</span></label>
+        <input type="number" id="weight" class="required" step="0.1" min="0.1" max="150" placeholder="ex: 8.5">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Hemogasometria</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>pH <span class="unit">*</span></label>
+        <input type="number" id="pH" class="required" step="0.001" min="6.5" max="7.9" placeholder="ex: 7.35">
+      </div>
+      <div class="form-group">
+        <label>pCO₂ <span class="unit">(mmHg)</span></label>
+        <input type="number" id="pCO2" step="0.1" min="5" max="150" placeholder="ex: 42">
+      </div>
+      <div class="form-group">
+        <label>HCO₃⁻ <span class="unit">(mEq/L)</span></label>
+        <input type="number" id="HCO3" step="0.1" min="1" max="60" placeholder="ex: 22">
+      </div>
+      <div class="form-group">
+        <label>BE <span class="unit">(mEq/L)</span></label>
+        <input type="number" id="BE" step="0.1" min="-30" max="30" placeholder="ex: -2">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Eletrólitos</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Na⁺ <span class="unit">(mEq/L)</span></label>
+        <input type="number" id="Na" step="0.1" min="100" max="210" placeholder="ex: 145">
+      </div>
+      <div class="form-group">
+        <label>K⁺ <span class="unit">(mEq/L)</span></label>
+        <input type="number" id="K" step="0.01" min="1" max="12" placeholder="ex: 4.2">
+      </div>
+      <div class="form-group">
+        <label>Cl⁻ <span class="unit">(mEq/L)</span></label>
+        <input type="number" id="Cl" step="0.1" min="60" max="170" placeholder="ex: 110">
+      </div>
+      <div class="form-group">
+        <label>Ca²⁺ ionizado <span class="unit">(mmol/L)</span></label>
+        <input type="number" id="iCa" step="0.01" min="0.1" max="5" placeholder="ex: 1.25">
+      </div>
+      <div class="form-group">
+        <label>Fósforo <span class="unit">(mg/dL)</span></label>
+        <input type="number" id="Pi" step="0.1" min="0.1" max="25" placeholder="ex: 4.5">
+      </div>
+      <div class="form-group">
+        <label>Magnésio <span class="unit">(mg/dL)</span></label>
+        <input type="number" id="Mg" step="0.1" min="0.1" max="10" placeholder="ex: 2.1">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Metabólitos / Hemograma</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Lactato <span class="unit">(mmol/L)</span></label>
+        <input type="number" id="lactate" step="0.1" min="0" max="30" placeholder="ex: 1.8">
+      </div>
+      <div class="form-group">
+        <label>Glicose <span class="unit">(mg/dL)</span></label>
+        <input type="number" id="glucose" step="1" min="0" max="1500" placeholder="ex: 95">
+      </div>
+      <div class="form-group">
+        <label>Hematócrito <span class="unit">(%)</span></label>
+        <input type="number" id="Hct" step="1" min="1" max="80" placeholder="ex: 42">
+      </div>
+      <div class="form-group">
+        <label>Albumina <span class="unit">(g/dL)</span></label>
+        <input type="number" id="albumin" step="0.1" min="0.1" max="8" placeholder="ex: 3.2">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="analisar()">Analisar Hemogasometria</button>
+
+</div><!-- /form-section -->
+
+<!-- ── RESULTADOS ─────────────────────────────────────────────────────────── -->
+<div id="results">
+
+  <div class="results-header">
+    <div class="results-title" id="results-title"></div>
+    <button class="btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Equilíbrio Ácido-Base</div>
+    <div class="table-wrap"><table class="finding-table" id="table-ab"></table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Eletrólitos e Metabólitos</div>
+    <div class="table-wrap"><table class="finding-table" id="table-ele"></table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Reposições Indicadas</div>
+    <div id="repos-container"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Valores de Referência — Hemogasometria Venosa</div>
+    <div class="table-wrap"><table class="ref-table">
+      <thead><tr><th>Parâmetro</th><th>Cão</th><th>Gato</th></tr></thead>
+      <tbody id="ref-tbody">
+        <tr><td>pH</td>                  <td>7,32 – 7,40</td><td>7,28 – 7,41</td></tr>
+        <tr><td>pCO₂ (mmHg)</td>         <td>35 – 50</td>    <td>33 – 45</td></tr>
+        <tr><td>HCO₃⁻ (mEq/L)</td>       <td>18 – 24</td>    <td>17 – 22</td></tr>
+        <tr><td>BE (mEq/L)</td>           <td>−4 a +4</td>    <td>−4 a +4</td></tr>
+        <tr><td>Na⁺ (mEq/L)</td>          <td>140 – 155</td>  <td>149 – 160</td></tr>
+        <tr><td>K⁺ (mEq/L)</td>           <td>3,5 – 5,5</td>  <td>3,5 – 5,0</td></tr>
+        <tr><td>Cl⁻ (mEq/L)</td>          <td>105 – 115</td>  <td>112 – 129</td></tr>
+        <tr><td>Ca²⁺ ion. (mmol/L)</td>   <td>1,12 – 1,40</td><td>1,12 – 1,40</td></tr>
+        <tr><td>Fósforo (mg/dL)</td>      <td>2,9 – 6,2</td>  <td>3,0 – 7,0</td></tr>
+        <tr><td>Magnésio (mg/dL)</td>     <td>1,7 – 2,7</td>  <td>1,8 – 2,9</td></tr>
+        <tr><td>Lactato (mmol/L)</td>     <td>&lt; 2,5</td>   <td>&lt; 2,5</td></tr>
+        <tr><td>Glicose (mg/dL)</td>      <td>70 – 120</td>   <td>65 – 130</td></tr>
+        <tr><td>Hematócrito (%)</td>      <td>37 – 60</td>    <td>25 – 55</td></tr>
+        <tr><td>Ânion Gap (mEq/L)</td>    <td>12 – 24</td>    <td>13 – 27</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card disclaimer">
+    ⚕ Ferramenta de auxílio clínico — não substitui o julgamento veterinário
+  </div>
+
+  <button class="btn-primary" onclick="novoPaciente()" style="max-width:320px;margin:0 auto;display:block">
+    Novo Paciente
+  </button>
+
+</div><!-- /results -->
+</main>
+
+<footer>Hemogasometria Venosa Veterinária &copy; 2025 — @wanderson_nefrovet</footer>
+
+<script>
+// ── Referências ────────────────────────────────────────────────────────────────
+const REF = {
+  dog: {
+    pH:[7.32,7.40], pCO2:[35.0,50.0], HCO3:[18.0,24.0], BE:[-4.0,4.0],
+    Na:[140.0,155.0], K:[3.5,5.5], Cl:[105.0,115.0], iCa:[1.12,1.40],
+    Pi:[2.9,6.2], Mg:[1.7,2.7], lactate:[0.0,2.5], glucose:[70.0,120.0],
+    AG_range:[12.0,24.0], Na_target:148.0, HCO3_target:15.0, K_target:4.0
+  },
+  cat: {
+    pH:[7.28,7.41], pCO2:[33.0,45.0], HCO3:[17.0,22.0], BE:[-4.0,4.0],
+    Na:[149.0,160.0], K:[3.5,5.0], Cl:[112.0,129.0], iCa:[1.12,1.40],
+    Pi:[3.0,7.0], Mg:[1.8,2.9], lactate:[0.0,2.5], glucose:[65.0,130.0],
+    AG_range:[13.0,27.0], Na_target:154.0, HCO3_target:15.0, K_target:4.0
+  }
+};
+
+let currentSpecies = 'dog';
+
+function selectSpecies(s) {
+  currentSpecies = s;
+  document.getElementById('btn-dog').classList.toggle('active', s==='dog');
+  document.getElementById('btn-cat').classList.toggle('active', s==='cat');
+}
+
+function val(id) {
+  const v = parseFloat(document.getElementById(id).value.replace(',','.'));
+  return isNaN(v) ? null : v;
+}
+
+// ── Ácido-Base ─────────────────────────────────────────────────────────────────
+function analisarAcidoBase(v) {
+  const A = [], ref = REF[v.species];
+  if (v.pH === null) { A.push({c:'Ácido-Base',s:'info',m:'pH não informado — análise incompleta.'}); return A; }
+
+  const [pH_lo,pH_hi]     = ref.pH;
+  const [pCO2_lo,pCO2_hi] = ref.pCO2;
+  const [HCO3_lo,HCO3_hi] = ref.HCO3;
+  const acidemia = v.pH < pH_lo, alcalemia = v.pH > pH_hi;
+
+  if (acidemia) {
+    const d = pH_lo - v.pH;
+    const s = v.pH<7.10?'critico':d>=0.10?'grave':d>=0.05?'moderado':'leve';
+    A.push({c:'pH',s,m:`ACIDEMIA — pH ${v.pH.toFixed(3)}  (ref ${pH_lo}–${pH_hi})`});
+  } else if (alcalemia) {
+    const d = v.pH - pH_hi;
+    A.push({c:'pH',s:d>=0.10?'grave':d>=0.05?'moderado':'leve',
+            m:`ALCALEMIA — pH ${v.pH.toFixed(3)}  (ref ${pH_lo}–${pH_hi})`});
+  } else {
+    A.push({c:'pH',s:'normal',m:`pH normal — ${v.pH.toFixed(3)}`});
+  }
+
+  if (v.HCO3===null||v.pCO2===null) {
+    A.push({c:'Ácido-Base',s:'info',m:'HCO3 e/ou pCO2 ausentes — análise incompleta.'}); return A;
+  }
+
+  const meta_acid=v.HCO3<HCO3_lo, meta_alk=v.HCO3>HCO3_hi;
+  const resp_acid=v.pCO2>pCO2_hi, resp_alk=v.pCO2<pCO2_lo;
+  let d, sev;
+
+  if (acidemia) {
+    if (meta_acid&&resp_acid)     d='Distúrbio MISTO: Acidose Metabólica + Respiratória';
+    else if (meta_acid)           d='Acidose Metabólica';
+    else if (resp_acid)           d='Acidose Respiratória';
+    else                          d='Acidemia — componentes em limites (misto?)';
+    sev=d.includes('MISTO')?'grave':'moderado';
+  } else if (alcalemia) {
+    if (meta_alk&&resp_alk)       d='Distúrbio MISTO: Alcalose Metabólica + Respiratória';
+    else if (meta_alk)            d='Alcalose Metabólica';
+    else if (resp_alk)            d='Alcalose Respiratória';
+    else                          d='Alcalemia — componentes em limites (misto?)';
+    sev=d.includes('MISTO')?'grave':'moderado';
+  } else {
+    if (meta_acid&&resp_alk)      d='Misto: Acidose Metabólica + Alcalose Respiratória (pH compensado)';
+    else if (meta_alk&&resp_acid) d='Misto: Alcalose Metabólica + Acidose Respiratória (pH compensado)';
+    else if (meta_acid)           d='Acidose Metabólica compensada';
+    else if (resp_acid)           d='Acidose Respiratória compensada';
+    else if (meta_alk)            d='Alcalose Metabólica compensada';
+    else if (resp_alk)            d='Alcalose Respiratória compensada';
+    else                          d='Equilíbrio ácido-base dentro dos limites';
+    sev=d.startsWith('Equilíbrio')?'normal':d.includes('Misto')?'moderado':'leve';
+  }
+  A.push({c:'Distúrbio Primário',s:sev,m:d});
+
+  // Compensação respiratória (acidose metabólica)
+  if (meta_acid&&acidemia) {
+    const esp=1.5*v.HCO3+8, tol=2;
+    if (v.pCO2<esp-tol)
+      A.push({c:'Compensação Resp.',s:'moderado',m:`pCO2 (${v.pCO2.toFixed(1)}) < esperado (${esp.toFixed(1)} ±${tol}) → alcalose resp. concomitante`});
+    else if (v.pCO2>esp+tol)
+      A.push({c:'Compensação Resp.',s:'moderado',m:`pCO2 (${v.pCO2.toFixed(1)}) > esperado (${esp.toFixed(1)} ±${tol}) → acidose resp. concomitante`});
+    else
+      A.push({c:'Compensação Resp.',s:'normal',m:`Adequada — pCO2 esperado ${esp.toFixed(1)} ±${tol} mmHg`});
+  }
+
+  // Compensação respiratória (alcalose metabólica)
+  if (meta_alk&&alcalemia) {
+    const esp=0.7*v.HCO3+21, tol=2;
+    A.push({c:'Compensação Resp.',s:Math.abs(v.pCO2-esp)<=tol?'normal':'moderado',
+            m:`pCO2 esperado ${esp.toFixed(1)} ±${tol} mmHg  (medido: ${v.pCO2.toFixed(1)})`});
+  }
+
+  // Compensação metabólica (acidose respiratória)
+  if (resp_acid&&acidemia) {
+    const delta=v.pCO2-pCO2_hi;
+    A.push({c:'Compensação Met.',s:'info',
+            m:`HCO3 esperado → Aguda: ${(HCO3_hi+delta/10*1.5).toFixed(1)}  |  Crônica: ${(HCO3_hi+delta/10*3.5).toFixed(1)}  (medido: ${v.HCO3.toFixed(1)})`});
+  }
+
+  // Compensação metabólica (alcalose respiratória)
+  if (resp_alk&&alcalemia) {
+    const delta=pCO2_lo-v.pCO2;
+    A.push({c:'Compensação Met.',s:'info',
+            m:`HCO3 esperado → Aguda: ${(HCO3_lo-delta/10*2).toFixed(1)}  |  Crônica: ${(HCO3_lo-delta/10*5).toFixed(1)}  (medido: ${v.HCO3.toFixed(1)})`});
+  }
+
+  // Ânion Gap
+  if (v.Na!==null&&v.Cl!==null) {
+    const AG=v.Na-(v.Cl+v.HCO3);
+    let AG_c=AG, corr='';
+    if (v.albumin!==null) {
+      const alb_n=v.species==='cat'?2.5:3.0;
+      AG_c=AG+2.5*(alb_n-v.albumin);
+      corr=`  (corrigido albumina: ${AG_c.toFixed(1)})`;
+    }
+    const [AG_lo,AG_hi]=ref.AG_range;
+    if (AG_c>AG_hi)
+      A.push({c:'Ânion Gap',s:AG_c>AG_hi+12?'grave':'moderado',
+              m:`ELEVADO: ${AG.toFixed(1)} mEq/L${corr}  (ref ${AG_lo}–${AG_hi}) → MUDPILES: uremia, cetoacidose, acidose lática, etilenoglicol`});
+    else if (AG_c<AG_lo)
+      A.push({c:'Ânion Gap',s:'leve',m:`BAIXO: ${AG.toFixed(1)} mEq/L${corr} → hipoalbuminemia, hiperglobulinemia`});
+    else
+      A.push({c:'Ânion Gap',s:'normal',m:`Normal: ${AG.toFixed(1)} mEq/L${corr}`});
+
+    // Delta-Delta
+    if (AG_c>AG_hi&&meta_acid) {
+      const dHCO3=HCO3_hi-v.HCO3;
+      if (dHCO3>0) {
+        const dd=(AG_c-(AG_lo+AG_hi)/2)/dHCO3;
+        const m=dd<0.4?`Δ/Δ = ${dd.toFixed(2)} (<0,4) → AG alto + AG normal concomitante`:
+                dd>2.0?`Δ/Δ = ${dd.toFixed(2)} (>2,0) → alcalose metabólica subjacente`:
+                       `Δ/Δ = ${dd.toFixed(2)} (0,4–2,0) → acidose metabólica pura`;
+        A.push({c:'Delta-Delta',s:dd>=0.4&&dd<=2.0?'normal':'moderado',m});
+      }
+    }
+  }
+
+  // SID
+  if (v.Na!==null&&v.K!==null&&v.Cl!==null) {
+    const SID=(v.Na+v.K)-v.Cl, norm=v.species==='dog'?40:38;
+    if (SID<norm-4) A.push({c:'SID Aparente',s:'moderado',m:`SID = ${SID.toFixed(1)} mEq/L (esperado ~${norm}) → acidose por íons fortes`});
+    else if (SID>norm+4) A.push({c:'SID Aparente',s:'leve',m:`SID = ${SID.toFixed(1)} mEq/L → alcalose por íons fortes`});
+  }
+
+  return A;
+}
+
+// ── Eletrólitos ────────────────────────────────────────────────────────────────
+function analisarEletrolitos(v) {
+  const A = [], ref = REF[v.species];
+
+  function cls(x, lo, hi) {
+    if (x>=lo&&x<=hi) return {dir:'normal',sev:'normal'};
+    const d=x<lo?lo-x:x-hi, f=d/((hi-lo)||1);
+    return {dir:x<lo?'baixo':'alto', sev:f>1?'critico':f>0.6?'grave':f>0.2?'moderado':'leve'};
+  }
+
+  function add(cat, x, u, lo, hi, nLow, nHigh, dLow='', dHigh='') {
+    const r=cls(x,lo,hi);
+    if (r.dir==='normal') { A.push({c:cat,s:'normal',m:`Normal: ${x} ${u}  (ref ${lo}–${hi})`}); return; }
+    const nome=r.dir==='baixo'?nLow:nHigh, dica=r.dir==='baixo'?dLow:dHigh;
+    A.push({c:cat,s:r.sev,m:`${nome}: ${x} ${u}  (ref ${lo}–${hi})${dica?` → ${dica}`:''}`});
+  }
+
+  if (v.Na!==null) {
+    const [lo,hi]=ref.Na;
+    add('Sódio',v.Na,'mEq/L',lo,hi,'HIPONATREMIA','HIPERNATREMIA',
+      'retenção hídrica, vômito/diarreia, Addison','desidratação, diabetes insipidus');
+  }
+
+  if (v.K!==null) {
+    const [lo,hi]=ref.K, r=cls(v.K,lo,hi);
+    if (r.dir==='normal') A.push({c:'Potássio',s:'normal',m:`Normal: ${v.K} mEq/L  (ref ${lo}–${hi})`});
+    else if (r.dir==='baixo')
+      A.push({c:'Potássio',s:v.K<2.0?'critico':r.sev,
+              m:`HIPOCALEMIA: ${v.K} mEq/L  (ref ${lo}–${hi}) → vômito/diarreia, anorexia, diuréticos, alcalose`});
+    else
+      A.push({c:'Potássio',s:v.K>7.0?'critico':r.sev,
+              m:`HIPERCALEMIA: ${v.K} mEq/L  (ref ${lo}–${hi}) → IRA/IRC, obstrução uretral, Addison, acidose`});
+  }
+
+  if (v.Cl!==null) {
+    const [lo,hi]=ref.Cl;
+    add('Cloreto',v.Cl,'mEq/L',lo,hi,'HIPOCLOREMIA','HIPERCLOREMIA',
+      'vômito, alcalose hipoclorêmica','acidose hiperclorêmica, NaCl 0,9% excessivo');
+  }
+
+  if (v.iCa!==null) {
+    const [lo,hi]=ref.iCa;
+    add('Ca²⁺ Ionizado',v.iCa,'mmol/L',lo,hi,'HIPOCALCEMIA','HIPERCALCEMIA',
+      'hipoparatireoidismo, eclâmpsia, pancreatite','neoplasia, hiperparatireoidismo, hipervit. D');
+  }
+
+  if (v.Pi!==null) {
+    const [lo,hi]=ref.Pi;
+    add('Fósforo',v.Pi,'mg/dL',lo,hi,'HIPOFOSFATEMIA','HIPERFOSFATEMIA',
+      'desnutrição, lipidose hepática (gatos), refeeding','IRC, hipoparatireoidismo, rabdomiólise');
+  }
+
+  if (v.Mg!==null) {
+    const [lo,hi]=ref.Mg;
+    add('Magnésio',v.Mg,'mg/dL',lo,hi,'HIPOMAGNESEMIA','HIPERMAGNESEMIA',
+      'vômito/diarreia crônica, diuréticos','IRC avançada, suplementação excessiva');
+  }
+
+  if (v.lactate!==null) {
+    const hi=ref.lactate[1];
+    if (v.lactate>hi) {
+      const s=v.lactate>8?'critico':v.lactate>5?'grave':v.lactate>3.5?'moderado':'leve';
+      A.push({c:'Lactato',s,m:`HIPERLACTATEMIA: ${v.lactate} mmol/L  (normal <${hi}) → hipoperfusão, hipóxia, sépsis, neoplasia`});
+    } else A.push({c:'Lactato',s:'normal',m:`Normal: ${v.lactate} mmol/L`});
+  }
+
+  if (v.glucose!==null) {
+    const [lo,hi]=ref.glucose;
+    if (v.glucose<lo) {
+      const s=v.glucose<45?'critico':v.glucose<55?'grave':v.glucose<65?'moderado':'leve';
+      A.push({c:'Glicose',s,m:`HIPOGLICEMIA: ${v.glucose} mg/dL  (ref ${lo}–${hi}) → insulinoma, sepse, hepatopatia`});
+    } else if (v.glucose>hi) {
+      const s=v.glucose>400?'grave':v.glucose>250?'moderado':'leve';
+      A.push({c:'Glicose',s,m:`HIPERGLICEMIA: ${v.glucose} mg/dL  (ref ${lo}–${hi}) → DM, estresse, pancreatite`});
+    } else A.push({c:'Glicose',s:'normal',m:`Normal: ${v.glucose} mg/dL`});
+  }
+
+  if (v.Hct!==null) {
+    const lo=v.species==='cat'?25:37, hi=v.species==='cat'?55:60;
+    if (v.Hct<lo) {
+      const s=v.Hct<12?'critico':v.Hct<18?'grave':v.Hct<22?'moderado':'leve';
+      A.push({c:'Hematócrito',s,m:`ANEMIA: Hct ${v.Hct}%  (ref ${lo}–${hi}%) → investigar causa`});
+    } else if (v.Hct>hi)
+      A.push({c:'Hematócrito',s:'moderado',m:`POLICITEMIA/HEMOCONCENTRAÇÃO: Hct ${v.Hct}%  (ref ${lo}–${hi}%)`});
+    else A.push({c:'Hematócrito',s:'normal',m:`Normal: Hct ${v.Hct}%`});
+  }
+
+  return A;
+}
+
+// ── Reposições ─────────────────────────────────────────────────────────────────
+function calcularReposicoes(v) {
+  const R = [], ref = REF[v.species], W = v.weight;
+
+  // Bicarbonato
+  if (v.pH!==null&&v.HCO3!==null&&v.HCO3<ref.HCO3[0]&&v.pH<ref.pH[0]) {
+    const alvo=ref.HCO3_target, def=(alvo-v.HCO3)*W*0.3, d1=def/2, urg=v.pH<7.10;
+    R.push({p:'Bicarbonato (HCO₃⁻)',critico:urg,
+      ind:`Acidose metabólica: pH ${v.pH.toFixed(3)}  /  HCO3 ${v.HCO3.toFixed(1)} mEq/L`,
+      calc:`Déficit parcial (alvo ${alvo} mEq/L) = (${alvo}−${v.HCO3.toFixed(1)}) × 0,3 × ${W.toFixed(1)} = ${def.toFixed(1)} mEq\n→ 1ª dose: ${d1.toFixed(1)} mEq  (½ do déficit)\n→ NaHCO3 8,4% (1 mEq/mL): ${d1.toFixed(1)} mL\n→ Diluído 1:1 em NaCl 0,9% → volume final: ${(d1*2).toFixed(0)} mL`,
+      taxa:`IV em ${urg?'15-30 min (URGÊNCIA)':'60–120 min'}  —  reavaliação gasométrica 1–2 h após`,
+      at:urg?'⚠ CRÍTICO: monitorar ECG — pH <7,10 → risco de arritmias\nNão corrigir para pH normal de uma vez — risco de alcalose rebote':
+             'Não usar para compensação respiratória — tratar causa primária'});
+  }
+
+  // Alcalose metabólica
+  if (v.HCO3!==null&&v.pH!==null&&v.HCO3>ref.HCO3[1]&&v.pH>ref.pH[1]) {
+    R.push({p:'Alcalose Metabólica',critico:false,
+      ind:`HCO3 ${v.HCO3.toFixed(1)} mEq/L  /  pH ${v.pH.toFixed(3)}`,
+      calc:'1) Hipocloremia → NaCl 0,9%\n2) Hipocalemia → KCl (ver seção K⁺)\n3) Vômito/sonda → omeprazol + NaCl 0,9%\n4) Refratária → acetazolamida 5–10 mg/kg VO BID',
+      taxa:'Monitorar HCO3 a cada 4–6 h',
+      at:'NÃO usar NaHCO3 — investigar causa (vômito, diurético, pós-hipercapnia)'});
+  }
+
+  // Potássio
+  if (v.K!==null) {
+    const [Klo,Khi]=ref.K;
+    if (v.K<Klo) {
+      const [conc,urg]= v.K>=3.0?[20,'rotina']:v.K>=2.5?[30,'moderada']:v.K>=2.0?[40,'urgente']:v.K>=1.5?[60,'emergência']:[80,'emergência crítica'];
+      R.push({p:'Potássio (K⁺) — Hipocalemia',critico:v.K<2.0,
+        ind:`K⁺ = ${v.K.toFixed(2)} mEq/L  (ref ${Klo}–${Khi})  —  urgência: ${urg}`,
+        calc:`Concentração no fluido: ${conc} mEq/L\n→ KCl 19,1% (2,56 mEq/mL): ${(conc/2.56).toFixed(1)} mL/L de fluido\n→ Taxa máxima: ${(0.5*W).toFixed(2)} mEq/kg/h = ${(0.5*W).toFixed(1)} mEq/h`,
+        taxa:'Não ultrapassar 0,5 mEq/kg/h  —  monitorar K⁺ a cada 2–4 h',
+        at:v.K<2.0?'⚠ K⁺ < 2,0 mEq/L: risco de arritmias fatais — UTI e ECG obrigatórios\nNUNCA infundir KCl puro não diluído':
+                   'Monitorar ECG se K⁺ <2,5 ou infusão >0,3 mEq/kg/h'});
+    } else if (v.K>Khi) {
+      if (v.K>7.0)
+        R.push({p:'Potássio (K⁺) — HIPERCALEMIA GRAVE',critico:true,
+          ind:`⚠ K⁺ = ${v.K.toFixed(2)} mEq/L — EMERGÊNCIA CARDÍACA`,
+          calc:`1) Gluconato de cálcio 10%: 0,5–1,5 mL/kg IV lento → ${(1.0*W).toFixed(1)} mL\n2) Insulina regular 0,25–0,5 U/kg IV + Dextrose 50%: ${(1.5*W).toFixed(1)} mL\n3) NaHCO3 se acidose concomitante\n4) Salina 7,5% se bradicardia/colapso\n5) Diálise peritoneal se causa renal irreversível`,
+          taxa:'URGÊNCIA — ECG contínuo — reavaliação a cada 30 min',
+          at:'⚠ RISCO DE PARADA CARDÍACA — iniciar tratamento imediatamente'});
+      else
+        R.push({p:'Potássio (K⁺) — Hipercalemia',critico:false,
+          ind:`K⁺ = ${v.K.toFixed(2)} mEq/L  (ref ${Klo}–${Khi})`,
+          calc:'1) Fluido ISENTO de K⁺ (NaCl 0,9%)\n2) Investigar: IRA, obstrução uretral, hipoadrenocorticismo, acidose\n3) Se K⁺ >6,5 com ECG alterado → gluconato Ca 10%: 0,5 mL/kg IV',
+          taxa:'Monitorar K⁺ a cada 2–4 h',
+          at:'Evitar fluidos com KCl — monitorar ECG continuamente'});
+    }
+  }
+
+  // Sódio
+  if (v.Na!==null) {
+    const [Nalo,Nahi]=ref.Na, Nalvo=ref.Na_target;
+    if (v.Na<Nalo) {
+      const def=(Nalvo-v.Na)*0.6*W;
+      R.push({p:'Sódio (Na⁺) — Hiponatremia',critico:false,
+        ind:`Na⁺ = ${v.Na.toFixed(1)} mEq/L  (ref ${Nalo}–${Nahi})`,
+        calc:`Déficit = (${Nalvo}−${v.Na.toFixed(1)}) × 0,6 × ${W.toFixed(1)} = ${def.toFixed(1)} mEq\n→ NaCl 0,9%: ~${(def/154*1000).toFixed(0)} mL\n→ NaCl 7,5% (emergência): ${(def/1.28).toFixed(0)} mL`,
+        taxa:`Máx. 0,5 mEq/L/h e ≤12 mEq/L/24h\n→ Tempo mínimo: ~${((Nalvo-v.Na)/0.5).toFixed(0)} h  —  monitorar Na⁺ a cada 2–4 h`,
+        at:'Correção rápida → mielinólise osmótica — NUNCA ultrapassar 12 mEq/L/24h'});
+    } else if (v.Na>Nahi) {
+      const FWD=0.6*W*(v.Na/Nalvo-1);
+      R.push({p:'Sódio (Na⁺) — Hipernatremia',critico:false,
+        ind:`Na⁺ = ${v.Na.toFixed(1)} mEq/L  (ref ${Nalo}–${Nahi})`,
+        calc:`Déficit de água livre = 0,6 × ${W.toFixed(1)} × (${v.Na.toFixed(1)}/${Nalvo}−1) = ${FWD.toFixed(2)} L (${(FWD*1000).toFixed(0)} mL)\n→ SG 5% ou NaCl 0,45%  +  necessidades de manutenção`,
+        taxa:`Redução máx. 0,5 mEq/L/h  (≤12 mEq/L/24h)\n→ Tempo mínimo: ~${((v.Na-Nalvo)/0.5).toFixed(0)} h`,
+        at:'Correção rápida → edema cerebral — atenção se crônica (>48 h)'});
+    }
+  }
+
+  // Cálcio
+  if (v.iCa!==null) {
+    const [lo,hi]=ref.iCa;
+    if (v.iCa<lo) {
+      const vg=0.5*W;
+      R.push({p:'Cálcio Ionizado — Hipocalcemia',critico:false,
+        ind:`iCa²⁺ = ${v.iCa.toFixed(2)} mmol/L  (ref ${lo}–${hi})`,
+        calc:`Gluconato Ca 10% (0,465 mEq/mL): 0,5–1,5 mL/kg\n→ ${vg.toFixed(1)}–${(vg*3).toFixed(1)} mL  diluídos 1:1 em NaCl 0,9%\n— OU —\nCaCl2 10%: 5–15 mg/kg IV → ${(5*W).toFixed(0)}–${(15*W).toFixed(0)} mg total`,
+        taxa:'Infundir em 10–20 min com ECG',
+        at:'⚠ Bradicardia durante infusão → reduzir velocidade ou suspender'});
+    } else if (v.iCa>hi) {
+      R.push({p:'Cálcio Ionizado — Hipercalcemia',critico:false,
+        ind:`iCa²⁺ = ${v.iCa.toFixed(2)} mmol/L  (ref ${lo}–${hi})`,
+        calc:`1) NaCl 0,9%: 2–3× manutenção\n2) Furosemida 1,5 mg/kg IV após reidratação → ${(1.5*W).toFixed(1)} mg\n3) Prednisolona 1–2 mg/kg se maligna/granulomatosa\n4) Investigar: neoplasia, hiperparatireoidismo, hipervit. D`,
+        taxa:'Monitorar iCa a cada 4–6 h',
+        at:'NÃO usar Ringer Lactato (contém Ca²⁺)'});
+    }
+  }
+
+  // Fósforo
+  if (v.Pi!==null&&v.Pi<ref.Pi[0]) {
+    const [lo,hi]=ref.Pi;
+    R.push({p:'Fósforo (Pi) — Hipofosfatemia',critico:false,
+      ind:`Pi = ${v.Pi.toFixed(1)} mg/dL  (ref ${lo}–${hi})`,
+      calc:`Leve (>2,0): fosfato VO\nModerada/grave (<2,0):\n  Fosfato de potássio: 0,06 mmol/kg/h IV → ${(0.06*W).toFixed(2)} mmol/h\n  Diluir em NaCl 0,9% — evitar Ca²⁺ no mesmo acesso`,
+      taxa:'Monitorar Pi, Ca²⁺ e K⁺ a cada 4–6 h',
+      at:'Atenção em lipidose hepática felina e refeeding syndrome'});
+  }
+
+  // Magnésio
+  if (v.Mg!==null&&v.Mg<ref.Mg[0]) {
+    const [lo,hi]=ref.Mg;
+    R.push({p:'Magnésio (Mg²⁺) — Hipomagnesemia',critico:false,
+      ind:`Mg²⁺ = ${v.Mg.toFixed(1)} mg/dL  (ref ${lo}–${hi})`,
+      calc:`MgSO4 50% (4 mEq/mL): 0,75–1,0 mEq/kg/dia IV\n→ ${(0.875*W/4).toFixed(1)} mL/dia  diluído em NaCl 0,9%`,
+      taxa:'Infundir em 24 h',
+      at:'Hipomagnesemia frequentemente coexiste com hipocalemia refratária'});
+  }
+
+  // Glicose
+  if (v.glucose!==null&&v.glucose<ref.glucose[0]) {
+    if (v.glucose<55)
+      R.push({p:'Glicose — Hipoglicemia Grave',critico:true,
+        ind:`Glicose = ${v.glucose.toFixed(0)} mg/dL — URGÊNCIA`,
+        calc:`Dextrose 50%: 0,75 mL/kg IV → ${(0.75*W).toFixed(1)} mL\nDiluir 1:4 em NaCl 0,9% → ${(0.75*W*5).toFixed(0)} mL total\nManutenção: ${(50*W/1000).toFixed(1)} mL D50% em 1 L de fluido`,
+        taxa:'Bolus em 5–10 min  —  glicemia em 15 e 30 min após',
+        at:'Investigar: insulinoma, sepse, hepatopatia, xylitol (cão)'});
+    else
+      R.push({p:'Glicose — Hipoglicemia Leve/Moderada',critico:false,
+        ind:`Glicose = ${v.glucose.toFixed(0)} mg/dL`,
+        calc:`D5%: ${(50*W/1000).toFixed(1)} mL de D50% em 1 L\nD2,5%: ${(25*W/1000).toFixed(1)} mL de D50% em 1 L`,
+        taxa:'Gotejamento contínuo  —  glicemia a cada 1–2 h',
+        at:'Investigar causa e corrigir'});
+  }
+
+  return R;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+const SEV_LABEL = {
+  normal:'✓ Normal', leve:'⚡ Leve', moderado:'⚠ Moderado',
+  grave:'✗ Grave',  critico:'☠ CRÍTICO', info:'ℹ Info'
+};
+
+function renderTable(id, rows) {
+  document.getElementById(id).innerHTML = rows.map(r =>
+    `<tr><td>${r.c}</td><td><span class="badge badge-${r.s}">${SEV_LABEL[r.s]||r.s}</span></td><td>${r.m}</td></tr>`
+  ).join('');
+}
+
+function renderRepos(repos) {
+  const c = document.getElementById('repos-container');
+  if (!repos.length) { c.innerHTML='<p class="no-repos">✓ Nenhuma reposição urgente indicada neste momento.</p>'; return; }
+  c.innerHTML = repos.map(r => `
+    <div class="repo-card${r.critico?' critico':''}">
+      <div class="repo-title">${r.p}</div>
+      <div class="repo-section"><div class="repo-label">Indicação</div><div class="repo-value">${r.ind}</div></div>
+      <div class="repo-section"><div class="repo-label">Cálculo / Dose</div><div class="repo-value">${r.calc}</div></div>
+      <div class="repo-section"><div class="repo-label">Taxa / Velocidade</div><div class="repo-value">${r.taxa}</div></div>
+      ${r.at?`<div class="repo-atencao">${r.at}</div>`:''}
+    </div>`).join('');
+}
+
+function highlightRef(species) {
+  document.querySelectorAll('#ref-tbody tr').forEach(row => {
+    row.cells[1].className = species==='dog'?'ref-hi':'';
+    row.cells[2].className = species==='cat'?'ref-hi':'';
+  });
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
+function analisar() {
+  const weight=val('weight'), pH=val('pH');
+  if (!weight) { alert('Informe o peso do paciente.'); return; }
+  if (!pH)     { alert('pH é obrigatório.'); return; }
+
+  const v = {
+    species:currentSpecies, weight, pH,
+    pCO2:val('pCO2'), HCO3:val('HCO3'), BE:val('BE'),
+    Na:val('Na'), K:val('K'), Cl:val('Cl'), iCa:val('iCa'),
+    Pi:val('Pi'), Mg:val('Mg'), lactate:val('lactate'),
+    glucose:val('glucose'), Hct:val('Hct'), albumin:val('albumin')
+  };
+
+  document.getElementById('results-title').textContent =
+    `Resultado — ${v.species==='dog'?'Cão':'Gato'}  •  ${weight.toFixed(1)} kg`;
+
+  renderTable('table-ab',  analisarAcidoBase(v));
+  renderTable('table-ele', analisarEletrolitos(v));
+  renderRepos(calcularReposicoes(v));
+  highlightRef(v.species);
+
+  document.querySelector('.form-section').style.display='none';
+  document.getElementById('results').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function novoPaciente() {
+  document.querySelector('.form-section').style.display='block';
+  document.getElementById('results').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

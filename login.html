@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acesso — Hemogasometria Veterinária</title>
+<script>document.documentElement.style.visibility='hidden'</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<style>
+:root {
+  --primary: #1d4ed8;
+  --primary-dark: #0f172a;
+  --brand-accent: #0ea5e9;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: rgba(148, 163, 184, 0.35);
+  --shadow-md: 0 16px 44px rgba(15, 23, 42, 0.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 500px at -10% -20%, rgba(59,130,246,0.23), transparent 60%),
+    radial-gradient(900px 460px at 110% 0%, rgba(14,165,233,0.18), transparent 60%),
+    linear-gradient(180deg, #f7fbff 0%, #eef4ff 100%);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:1.5rem;
+  color:var(--text)
+}
+.card{
+  background:rgba(255,255,255,0.72);
+  border-radius:22px;
+  border:1px solid var(--border);
+  padding:2.2rem 2rem;
+  width:100%;max-width:400px;
+  box-shadow:var(--shadow-md);
+  backdrop-filter:blur(12px);
+}
+.brand{display:flex;align-items:center;gap:.9rem;margin-bottom:1.8rem}
+.brand-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0ea5e9,#22d3ee);
+  box-shadow:0 8px 20px rgba(37,99,235,.22);flex-shrink:0
+}
+.brand-icon img{width:100%;height:100%;object-fit:contain;border-radius:10px;background:#fff}
+.brand-title{font-size:1.05rem;font-weight:800;line-height:1.3}
+.brand-sub{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+.access-badge{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:rgba(37,99,235,.1);border:1px solid rgba(59,130,246,.26);
+  color:#1e3a8a;border-radius:999px;
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.22rem .65rem;margin-bottom:1.5rem
+}
+.form-group{display:flex;flex-direction:column;gap:.28rem;margin-bottom:1rem}
+label{font-size:.78rem;font-weight:600;color:#334155}
+input[type=email],input[type=password]{
+  padding:.62rem .82rem;
+  border:1px solid var(--border);border-radius:12px;
+  font-size:.97rem;background:rgba(255,255,255,.72);color:#0f172a;
+  width:100%;transition:.2s
+}
+input:focus{outline:none;border-color:#38bdf8;background:#fff;box-shadow:0 0 0 3px rgba(56,189,248,.16)}
+.btn{
+  display:block;width:100%;padding:.9rem;
+  background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff;
+  border:none;border-radius:13px;font-size:1rem;font-weight:700;
+  cursor:pointer;transition:.2s;margin-top:.4rem;letter-spacing:.01em
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,.3)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+.error{
+  display:flex;align-items:center;gap:.5rem;
+  background:#fee2e2;border:1px solid rgba(220,38,38,.3);
+  border-radius:10px;padding:.65rem .85rem;
+  color:#7f1d1d;font-size:.86rem;font-weight:600;
+  margin-bottom:1rem
+}
+.error svg{flex-shrink:0}
+footer{text-align:center;color:var(--muted);font-size:.76rem;margin-top:1.6rem}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">
+    <div class="brand-icon">
+      <img src="oscar/image.png" alt="Logo" loading="eager">
+    </div>
+    <div>
+      <div class="brand-title">Hemogasometria Venosa Veterinária</div>
+      <div class="brand-sub">Interpretação e Reposição — Cães e Gatos</div>
+    </div>
+  </div>
+
+  <div class="access-badge">
+    <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
+    Acesso Restrito
+  </div>
+
+  <div id="error-box" class="error" style="display:none" role="alert">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+    <span id="error-text"></span>
+  </div>
+
+  <form id="login-form" novalidate>
+    <div class="form-group">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Senha</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="btn" id="btn-login">Entrar</button>
+  </form>
+
+  <footer>Ferramenta de uso clínico restrito a profissionais autorizados.</footer>
+</div>
+
+<script>
+(async () => {
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session) { window.location.replace('index.html'); return; }
+  document.documentElement.style.visibility = '';
+})();
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('btn-login');
+  const errorBox = document.getElementById('error-box');
+
+  errorBox.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+
+  const { error } = await sbClient.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    document.getElementById('error-text').textContent =
+      error.message === 'Invalid login credentials'
+        ? 'E-mail ou senha incorretos.'
+        : error.message;
+    errorBox.style.display = 'flex';
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  } else {
+    window.location.replace('index.html');
+  }
+});
+</script>
+</body>
+</html>

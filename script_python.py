@@ -107,6 +107,92 @@ class Reposicao:
     atencao: str = ""
 
 
+HARD_LIMITS = {
+    "weight": (0.1, 250.0),
+    "pH": (6.0, 8.5),
+    "pCO2": (1.0, 300.0),
+    "HCO3": (1.0, 120.0),
+    "BE": (-80.0, 80.0),
+    "Na": (50.0, 250.0),
+    "K": (0.5, 20.0),
+    "Cl": (30.0, 250.0),
+    "iCa": (0.1, 5.0),
+    "Pi": (0.1, 40.0),
+    "Mg": (0.1, 20.0),
+    "lactate": (0.0, 40.0),
+    "glucose": (0.0, 3000.0),
+    "Hct": (1.0, 90.0),
+    "albumin": (0.1, 10.0),
+}
+
+EXTREME_WARN_LIMITS = {
+    "weight": (0.1, 150.0),
+    "pH": (6.5, 7.9),
+    "pCO2": (5.0, 150.0),
+    "HCO3": (1.0, 60.0),
+    "BE": (-30.0, 30.0),
+    "Na": (100.0, 210.0),
+    "K": (1.0, 12.0),
+    "Cl": (60.0, 170.0),
+    "iCa": (0.1, 5.0),
+    "Pi": (0.1, 25.0),
+    "Mg": (0.1, 10.0),
+    "lactate": (0.0, 30.0),
+    "glucose": (0.0, 1500.0),
+    "Hct": (1.0, 80.0),
+    "albumin": (0.1, 8.0),
+}
+
+INPUT_LABELS = {
+    "weight": "Peso",
+    "pH": "pH",
+    "pCO2": "pCO2",
+    "HCO3": "HCO3",
+    "BE": "BE",
+    "Na": "Na⁺",
+    "K": "K⁺",
+    "Cl": "Cl⁻",
+    "iCa": "Ca²⁺ ionizado",
+    "Pi": "Fósforo",
+    "Mg": "Magnésio",
+    "lactate": "Lactato",
+    "glucose": "Glicose",
+    "Hct": "Hematócrito",
+    "albumin": "Albumina",
+}
+
+
+def validar_valores(v: Valores) -> List[str]:
+    if v.species not in REF:
+        raise ValueError("Espécie inválida. Use 'dog' ou 'cat'.")
+    if v.weight is None:
+        raise ValueError("Peso é obrigatório.")
+    if v.pH is None:
+        raise ValueError("pH é obrigatório.")
+
+    erros = []
+    for campo, (vmin, vmax) in HARD_LIMITS.items():
+        valor = getattr(v, campo)
+        if valor is None:
+            continue
+        if valor < vmin or valor > vmax:
+            erros.append(f"{INPUT_LABELS.get(campo, campo)} fora da faixa aceitável ({vmin}–{vmax}).")
+
+    if erros:
+        raise ValueError("Dados inválidos:\n  - " + "\n  - ".join(erros))
+
+    avisos = []
+    for campo, (vmin, vmax) in EXTREME_WARN_LIMITS.items():
+        valor = getattr(v, campo)
+        if valor is None:
+            continue
+        if valor < vmin or valor > vmax:
+            avisos.append(
+                f"{INPUT_LABELS.get(campo, campo)} = {valor} (faixa habitual {vmin}–{vmax})"
+            )
+    return avisos
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Análise ácido-base
 # ──────────────────────────────────────────────────────────────────────────────
@@ -421,7 +507,7 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
             # Alvo parcial conservador (15 mEq/L) — correção total nunca de uma vez
             alvo = ref["HCO3_target"]
             deficit = (alvo - v.HCO3) * W * 0.3
-            dose_ini = deficit / 2  # metade do déficit calculado na 1ª dose
+            dose_ini = deficit / 3  # 1/3 do déficit calculado na 1ª dose
             vol_8_4  = dose_ini     # NaHCO3 8.4% = 1 mEq/mL
             vol_total = vol_8_4 * 2 # diluído 1:1 em NaCl 0.9%
             urgencia = v.pH < 7.10
@@ -432,7 +518,7 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
                 calculo=(
                     f"Déficit parcial (alvo HCO3 {alvo} mEq/L) = (alvo−atual) × 0,3 × peso\n"
                     f"  = ({alvo} − {v.HCO3:.1f}) × 0,3 × {W:.1f} = {deficit:.1f} mEq\n"
-                    f"  → 1ª dose: {dose_ini:.1f} mEq  (½ do déficit)\n"
+                    f"  → 1ª dose: {dose_ini:.1f} mEq  (⅓ do déficit)\n"
                     f"  → NaHCO3 8,4% (1 mEq/mL): {vol_8_4:.1f} mL\n"
                     f"  → Diluído 1:1 em NaCl 0,9% → volume final: {vol_total:.0f} mL"
                 ),
@@ -479,13 +565,16 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
             max_mEqh = 0.5 * W
             # KCl 19,1% = 2,56 mEq/mL
             vol_KCl_por_L = conc / 2.56
+            # KCl 10% = 1,34 mEq/mL
+            vol_KCl10_por_L = conc / 1.34
             repos.append(Reposicao(
                 parametro="Potássio (K⁺) — Hipocalemia",
                 indicacao=f"K⁺ = {v.K:.2f} mEq/L  (ref {K_lo}–{K_hi})  —  urgência: {urgstr}",
                 calculo=(
                     f"Concentração no fluido: {conc} mEq/L de KCl\n"
                     f"  → KCl 19,1% (2,56 mEq/mL): {vol_KCl_por_L:.1f} mL por litro de fluido\n"
-                    f"  → Taxa máxima absoluta: {max_mEqh:.2f} mEq/kg/h  =  {max_mEqh:.1f} mEq/h"
+                    f"  → KCl 10% (1,34 mEq/mL): {vol_KCl10_por_L:.1f} mL por litro de fluido\n"
+                    f"  → Taxa máxima: 0,5 mEq/kg/h  =  {max_mEqh:.1f} mEq/h"
                 ),
                 taxa=f"Não ultrapassar 0,5 mEq/kg/h  —  monitorar K⁺ a cada 2–4 h",
                 atencao=(
@@ -504,8 +593,8 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
                     calculo=(
                         "1) Gluconato de cálcio 10%: 0,5–1,5 mL/kg IV lento (5–10 min)\n"
                         f"   → Volume: {1.0 * W:.1f} mL  (estabilização de membrana — início em 1–5 min)\n"
-                        "2) Insulina regular: 0,25–0,5 U/kg IV  +  Dextrose 50%: 1–2 g/kg\n"
-                        f"   → Dextrose 50%: {1.5 * W:.1f} mL IV  (redistribuição intracelular — 20–30 min)\n"
+                        "2) Insulina regular: 0,25–0,5 U/kg IV  +  Dextrose 50%: 1–2 mL/kg (0,5–1,0 g/kg)\n"
+                        f"   → Dextrose 50%: {1.5 * W:.1f} mL IV  (dose intermediária; redistribuição em 20–30 min)\n"
                         "3) NaHCO3 (se acidose concomitante): reduz K⁺ por alcalinização\n"
                         "4) Salina hipertônica 7,5%: se bradicardia/colapso\n"
                         "5) Considerar diálise peritoneal se causa renal irreversível"
@@ -542,8 +631,9 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
                 calculo=(
                     f"Déficit de Na⁺ = (alvo − atual) × 0,6 × peso\n"
                     f"  = ({Na_alvo:.0f} − {v.Na:.1f}) × 0,6 × {W:.1f} = {deficit_Na:.1f} mEq\n"
-                    f"  → NaCl 0,9%: ~{vol_NaCl09:.0f} mL para repor o déficit\n"
-                    f"  → NaCl 7,5% (emergências): {deficit_Na / 1.28:.0f} mL"
+                    f"  → NaCl 0,9%: ~{vol_NaCl09:.0f} mL para correção gradual\n"
+                    "  → Se sintomática com sinais neurológicos: NaCl hipertônico 3–7,5%:\n"
+                    "    2–6 mL/kg em 10–15 min"
                 ),
                 taxa=(
                     f"Máximo 0,5 mEq/L/h e ≤10–12 mEq/L nas primeiras 24 h\n"
@@ -652,10 +742,10 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
                     calculo=(
                         f"Dextrose 50% (D50%): 0,5–1,0 mL/kg IV bolus\n"
                         f"  → Volume: {0.75 * W:.1f} mL IV (dose 0,75 mL/kg)\n"
-                        f"  → Diluir 1:4 em NaCl 0,9% → D12,5%: {0.75 * W * 5:.0f} mL total\n"
-                        f"  Manutenção: D5% em fluido  →  D50%: {50*W/1000:.1f} mL em 1 L de fluido"
+                        "  → Diluir 1:2 a 1:4 em NaCl 0,9%\n"
+                        "  Manutenção (concentração): D5% = 100 mL de D50% + 900 mL de fluido (1 L final)"
                     ),
-                    taxa="Bolus em 5–10 min  —  medir glicemia em 15 e 30 min após",
+                    taxa="Bolus em 2–5 min  —  medir glicemia em 15 e 30 min após",
                     atencao="Investigar causa: insulinoma, sepse, hepatopatia grave, xylitol (cão)"
                 ))
             else:
@@ -664,8 +754,8 @@ def calcular_reposicoes(v: Valores) -> List[Reposicao]:
                     indicacao=f"Glicose = {v.glucose:.0f} mg/dL",
                     calculo=(
                         f"Suplementação no fluido de manutenção:\n"
-                        f"  D5%: {50*W/1000:.1f} mL de D50% em 1 L de fluido\n"
-                        f"  D2,5%: {25*W/1000:.1f} mL de D50% em 1 L de fluido"
+                        "  D5%: 100 mL de D50% + 900 mL de fluido (1 L final)\n"
+                        "  D2,5%: 50 mL de D50% + 950 mL de fluido (1 L final)"
                     ),
                     taxa="Gotejamento contínuo  —  monitorar glicemia a cada 1–2 h",
                     atencao="Investigar causa e corrigir"
@@ -794,6 +884,15 @@ def exibir_referencia_rich(species: str):
     console.print(t)
 
 
+def exibir_literatura_rich():
+    refs = (
+        "1) AAHA. 2024 AAHA Fluid Therapy Guidelines for Dogs and Cats\n"
+        "2) DiBartola SP. Fluid, Electrolyte, and Acid-Base Disorders in Small Animal Practice\n"
+        "3) Hopper K. referências de terapia intensiva veterinária para distúrbios ácido-base e eletrólitos"
+    )
+    console.print(Panel(refs, title="[bold dim]Literatura de Referência[/bold dim]", border_style="dim"))
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Exibição — texto puro (fallback)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -821,6 +920,15 @@ def exibir_reposicoes_plain(repos: List[Reposicao]):
         print(f"  Taxa      : {r.taxa}")
         if r.atencao:
             print(f"  ATENÇÃO   : {r.atencao}")
+
+
+def exibir_literatura_plain():
+    print(f"\n{'─'*70}")
+    print("  LITERATURA DE REFERÊNCIA")
+    print(f"{'─'*70}")
+    print("  1) AAHA. 2024 AAHA Fluid Therapy Guidelines for Dogs and Cats")
+    print("  2) DiBartola SP. Fluid, Electrolyte, and Acid-Base Disorders in Small Animal Practice")
+    print("  3) Hopper K. referências de terapia intensiva veterinária para distúrbios ácido-base e eletrólitos")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -888,7 +996,23 @@ def run():
         print("="*70)
 
     v = coletar_valores()
+    avisos = validar_valores(v)
     nome = "Cão" if v.species == "dog" else "Gato"
+    if avisos:
+        if HAS_RICH:
+            console.print(
+                Panel(
+                    "\n".join(f"• {a}" for a in avisos)
+                    + "\n\nOs valores foram mantidos para análise (casos graves podem sair da faixa habitual).",
+                    title="[bold yellow]Aviso — valores extremos[/bold yellow]",
+                    border_style="yellow",
+                )
+            )
+        else:
+            print("\n[AVISO] Valores extremos detectados:")
+            for a in avisos:
+                print(f"  - {a}")
+            print("  (Análise continuada; casos graves podem sair da faixa habitual.)\n")
 
     achados_ab  = analisar_acido_base(v)
     achados_ele = analisar_eletrolitos(v)
@@ -902,6 +1026,7 @@ def run():
         exibir_achados_rich("Eletrólitos e Metabólitos", achados_ele)
         exibir_reposicoes_rich(repos)
         exibir_referencia_rich(v.species)
+        exibir_literatura_rich()
         console.print("\n[dim]⚕  Ferramenta de auxílio clínico — não substitui o julgamento veterinário[/dim]\n")
     else:
         print(f"\n{'='*70}")
@@ -910,6 +1035,7 @@ def run():
         exibir_achados_plain("EQUILÍBRIO ÁCIDO-BASE", achados_ab)
         exibir_achados_plain("ELETRÓLITOS E METABÓLITOS", achados_ele)
         exibir_reposicoes_plain(repos)
+        exibir_literatura_plain()
         print("\n[Ferramenta de auxílio — não substitui julgamento clínico]\n")
 
     print()
@@ -921,6 +1047,9 @@ def run():
 if __name__ == "__main__":
     try:
         run()
+    except ValueError as exc:
+        print(f"\n⚠ {exc}\n")
+        sys.exit(1)
     except KeyboardInterrupt:
         print("\n\nSaindo...\n")
         sys.exit(0)
